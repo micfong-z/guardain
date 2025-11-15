@@ -15,3 +15,31 @@ body {
 nextjs-portal {
   display: none;
 }
+
+.leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) grayscale(90%) !important;
+}
+
+.leaflet-control-attribution {
+  filter: invert(0.9) hue-rotate(180deg) !important;
+}
+
+.leaflet-attribution-flag {
+  filter: invert(0.9) hue-rotate(180deg) !important;
+}
+
+.leaflet-popup-tip-container {
+  display: none;
+}
+
+.leaflet-popup-content-wrapper {
+  background: #17171740 !important;
+  color: rgb(var(--foreground-rgb)) !important;
+  backdrop-filter: blur(4px);
+  border-radius: 0px !important;
+  border: 1px solid #ffffff20;
+}
+
+.leaflet-popup-content {
+  margin: 8px 20px !important;
+}
