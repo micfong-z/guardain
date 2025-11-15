@@ -25,14 +25,14 @@ function startCompassListener(callback: (compass: number) => void) {
     let compass = e.webkitCompassHeading;
     if (compass != null && !isNaN(compass)) {
       callback(compass);
-      window.removeEventListener("deviceorientationabsolute", absoluteListener);
+      window.removeEventListener("deviceorientationabsolute" as keyof WindowEventMap, absoluteListener as EventListenerOrEventListenerObject);
     }
   }
 
   function addListeners() {
     // Add both listeners, and if either succeeds then remove the other one.
-    window.addEventListener("deviceorientationabsolute", absoluteListener);
-    window.addEventListener("deviceorientation", webkitListener);
+    window.addEventListener("deviceorientationabsolute" as keyof WindowEventMap, absoluteListener as EventListenerOrEventListenerObject);
+    window.addEventListener("deviceorientation" as keyof WindowEventMap, webkitListener as EventListenerOrEventListenerObject);
   }
 
   if (typeof ((DeviceOrientationEvent as any).requestPermission) === "function") {
@@ -49,8 +49,8 @@ function startCompassListener(callback: (compass: number) => void) {
   }
   
   return () => {
-    window.removeEventListener("deviceorientationabsolute", absoluteListener);
-    window.removeEventListener("deviceorientation", webkitListener);
+    window.removeEventListener("deviceorientationabsolute" as keyof WindowEventMap, absoluteListener as EventListenerOrEventListenerObject);
+    window.removeEventListener("deviceorientation" as keyof WindowEventMap, webkitListener as EventListenerOrEventListenerObject);
   };
 }
 
