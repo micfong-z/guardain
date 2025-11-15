@@ -41,7 +41,6 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     
     return R * c
 
-
 def get_visibility_level(visibility_meters: int) -> str:
     """Categorize visibility level"""
     if visibility_meters < 1000:
@@ -52,6 +51,48 @@ def get_visibility_level(visibility_meters: int) -> str:
         return "moderate"
     else:
         return "good"
+
+def decode_polyline(polyline_str: str) -> List[List[float]]:
+    """
+    Decodes an OpenRouteService (or Google Maps) Encoded Polyline string 
+    into a list of [lon, lat] coordinates.
+    """
+    index, lat, lon = 0, 0, 0
+    coordinates = []
+    
+    while index < len(polyline_str):
+        # Decode latitude
+        shift = 0
+        result = 0
+        while True:
+            byte = ord(polyline_str[index]) - 63
+            index += 1
+            result |= (byte & 0x1f) << shift
+            shift += 5
+            if not (byte >= 0x20):
+                break
+        
+        dlat = ~(result >> 1) if result & 1 else (result >> 1)
+        lat += dlat
+
+        # Decode longitude
+        shift = 0
+        result = 0
+        while True:
+            byte = ord(polyline_str[index]) - 63
+            index += 1
+            result |= (byte & 0x1f) << shift
+            shift += 5
+            if not (byte >= 0x20):
+                break
+        
+        dlon = ~(result >> 1) if result & 1 else (result >> 1)
+        lon += dlon
+        
+        # ORS encodes coordinates with 6 decimal places: [lon, lat]
+        coordinates.append([lon / 100000.0, lat / 100000.0])
+
+    return coordinates
 
 
 # ============================================================================
@@ -331,185 +372,209 @@ def get_weather_conditions(latitude: float, longitude: float) -> Dict:
             }
         
 
-# @mcp.tool()
-# def get_route_options(
-#     start_lat: float,
-#     start_lon: float,
-#     end_lat: float,
-#     end_lon: float,
-#     mode: str = "walking"
-# ) -> Dict:
-#     """Get 2-3 alternative routes between two points.
+@mcp.tool()
+def get_route_options(
+    start_lat: float,
+    start_lon: float,
+    end_lat: float,
+    end_lon: float,
+    mode: str = "walking"
+) -> Dict:
+    """Get 2-3 alternative routes between two points.
     
-#     Returns waypoints for each route that can be analyzed for safety.
-#     Each route includes distance, duration, and sampled waypoints.
+    Returns waypoints for each route that can be analyzed for safety.
+    Each route includes distance, duration, and sampled waypoints.
     
-#     Args:
-#         start_lat: Starting point latitude
-#         start_lon: Starting point longitude
-#         end_lat: Destination latitude
-#         end_lon: Destination longitude
-#         mode: Travel mode - 'walking', 'cycling', or 'driving' (default: walking)
+    Args:
+        start_lat: Starting point latitude
+        start_lon: Starting point longitude
+        end_lat: Destination latitude
+        end_lon: Destination longitude
+        mode: Travel mode - 'walking', 'cycling', or 'driving' (default: walking)
     
-#     Returns:
-#         Dictionary with list of route options including waypoints
-#     """
-#     if not OPENROUTE_API_KEY:
-#         # Fallback: create simple direct route
-#         distance_miles = calculate_distance(start_lat, start_lon, end_lat, end_lon)
+    Returns:
+        Dictionary with list of route options including waypoints
+    """
+    # Fallback when API key is not set
+    if not OPENROUTE_API_KEY:
+        distance_miles = calculate_distance(start_lat, start_lon, end_lat, end_lon)
         
-#         return {
-#             "routes": [{
-#                 "route_id": 1,
-#                 "distance_meters": int(distance_miles * 1609.34),
-#                 "duration_minutes": int(distance_miles * 20),  # ~3mph walking
-#                 "description": "Direct route (estimated)",
-#                 "route_type": "direct",
-#                 "waypoints": [
-#                     {"lat": start_lat, "lon": start_lon},
-#                     {"lat": (start_lat + end_lat)/2, "lon": (start_lon + end_lon)/2},
-#                     {"lat": end_lat, "lon": end_lon}
-#                 ]
-#             }],
-#             "note": "Using estimated direct route. Set OPENROUTE_API_KEY for real routing."
-#         }
+        return {
+            "routes": [{
+                "route_id": 1,
+                "distance_meters": int(distance_miles * 1609.34),
+                "duration_minutes": int(distance_miles * 20),
+                "description": "Direct route (estimated)",
+                "route_type": "direct",
+                "waypoints": [
+                    {"lat": start_lat, "lon": start_lon},
+                    {"lat": (start_lat + end_lat)/2, "lon": (start_lon + end_lon)/2},
+                    {"lat": end_lat, "lon": end_lon}
+                ]
+            }],
+            "note": "Using estimated direct route. Set OPENROUTE_API_KEY for real routing."
+        }
     
-#     # Use OpenRouteService for real routing
-#     try:
-#         profile = "foot-walking" if mode == "walking" else f"driving-car" if mode == "driving" else "cycling-regular"
+    # Use OpenRouteService for real routing
+    try:
+        profile = {
+            "walking": "foot-walking",
+            "driving": "driving-car",
+            "cycling": "cycling-regular"
+        }.get(mode.lower(), "foot-walking")
         
-#         with httpx.Client(timeout=15.0) as client:
-#             response = client.post(
-#                 f"https://api.openrouteservice.org/v2/directions/{profile}",
-#                 json={
-#                     "coordinates": [[start_lon, start_lat], [end_lon, end_lat]],
-#                     "alternative_routes": {"target_count": 2},
-#                     "instructions": False
-#                 },
-#                 headers={"Authorization": OPENROUTE_API_KEY}
-#             )
-#             response.raise_for_status()
-#             route_data = response.json()
+        # ORS expects coordinates in [lon, lat] format
+        coordinates = [[start_lon, start_lat], [end_lon, end_lat]]
+
+        with httpx.Client(timeout=15.0) as client:
+            response = client.post(
+                f"https://api.openrouteservice.org/v2/directions/{profile}",
+                json={
+                    "coordinates": coordinates,
+                    # Request up to 3 alternative routes, though ORS often returns 2
+                    "alternative_routes": {"target_count": 3}, 
+                    "instructions": False
+                },
+                headers={"Authorization": OPENROUTE_API_KEY}
+            )
+            response.raise_for_status()
+            route_data = response.json()
         
-#         routes = []
-#         for idx, route in enumerate(route_data.get("routes", [])[:3]):
-#             # Sample waypoints from route geometry
-#             coords = route["geometry"]["coordinates"]
-#             step = max(1, len(coords) // 5)  # Get ~5 waypoints
-#             waypoints = [
-#                 {"lat": coord[1], "lon": coord[0]} 
-#                 for coord in coords[::step]
-#             ]
+        # print("ORS Response Data:", route_data)
+
+        routes = []
+        for idx, route in enumerate(route_data.get("routes", [])[:3]):
+            # CRITICAL FIX: Decode the Encoded Polyline string to get coordinates
+            coords = decode_polyline(route["geometry"]) 
             
-#             routes.append({
-#                 "route_id": idx + 1,
-#                 "distance_meters": int(route["summary"]["distance"]),
-#                 "duration_minutes": int(route["summary"]["duration"] / 60),
-#                 "description": f"Route {idx + 1}",
-#                 "route_type": mode,
-#                 "waypoints": waypoints
-#             })
+            # Sample waypoints (e.g., ~5 points) for efficiency
+            step = max(1, len(coords) // 5)
+            waypoints = [
+                {"lat": coord[1], "lon": coord[0]} # coord is [lon, lat], so flip for UI
+                for coord in coords[::step]
+            ]
+            
+            # Ensure start and end points are always included
+            if not waypoints or waypoints[0] != {"lat": start_lat, "lon": start_lon}:
+                 waypoints.insert(0, {"lat": start_lat, "lon": start_lon})
+            if waypoints[-1] != {"lat": end_lat, "lon": end_lon}:
+                 waypoints.append({"lat": end_lat, "lon": end_lon})
+            
+            routes.append({
+                "route_id": idx + 1,
+                "distance_meters": int(route["summary"]["distance"]),
+                # Convert duration from seconds to minutes
+                "duration_minutes": int(route["summary"]["duration"] / 60), 
+                "description": f"Route {idx + 1} ({profile.split('-')[0]})",
+                "route_type": mode,
+                "waypoints": waypoints
+            })
         
-#         return {"routes": routes}
+        return {"routes": routes}
     
-#     except Exception as e:
-#         # Fallback to direct route
-#         distance_miles = calculate_distance(start_lat, start_lon, end_lat, end_lon)
-#         return {
-#             "routes": [{
-#                 "route_id": 1,
-#                 "distance_meters": int(distance_miles * 1609.34),
-#                 "duration_minutes": int(distance_miles * 20),
-#                 "description": "Direct route (fallback)",
-#                 "route_type": "estimated",
-#                 "waypoints": [
-#                     {"lat": start_lat, "lon": start_lon},
-#                     {"lat": end_lat, "lon": end_lon}
-#                 ]
-#             }],
-#             "note": f"Using fallback routing: {str(e)}"
-#         }
+    except httpx.HTTPStatusError as e:
+        error_msg = f"HTTP Error: {e.response.status_code}. Check API key and coordinates."
+        # Fall through to the final general exception handler
+    except Exception as e:
+        error_msg = f"API Request Failed: {str(e)}"
+        
+    # Final Fallback to direct route on any API error
+    distance_miles = calculate_distance(start_lat, start_lon, end_lat, end_lon)
+    return {
+        "routes": [{
+            "route_id": 1,
+            "distance_meters": int(distance_miles * 1609.34),
+            "duration_minutes": int(distance_miles * 20),
+            "description": "Direct route (fallback)",
+            "route_type": "estimated",
+            "waypoints": [
+                {"lat": start_lat, "lon": start_lon},
+                {"lat": end_lat, "lon": end_lon}
+            ]
+        }],
+        "note": f"Using fallback routing: {error_msg}"
+    }
 
 
-# @mcp.tool()
-# def analyze_route_safety(waypoints: List[Dict], route_id: int = 1) -> Dict:
-#     """Analyze crime statistics along a specific route.
+@mcp.tool()
+def analyze_route_safety(waypoints: List[Dict], route_id: int = 1) -> Dict:
+    """Analyze crime statistics along a specific route.
     
-#     Takes waypoints from get_route_options and returns aggregated safety metrics
-#     including total crimes, average per segment, and highest risk areas.
+    Takes waypoints from get_route_options and returns aggregated safety metrics
+    including total crimes, average per segment, and highest risk areas.
     
-#     Args:
-#         waypoints: Array of waypoint dictionaries with 'lat' and 'lon' keys
-#         route_id: Route identifier for reference (default: 1)
+    Args:
+        waypoints: Array of waypoint dictionaries with 'lat' and 'lon' keys
+        route_id: Route identifier for reference (default: 1)
     
-#     Returns:
-#         Dictionary with overall crime count, segment analyses, and highest risk segment
-#     """
-#     try:
-#         segment_analyses = []
-#         total_crimes = 0
+    Returns:
+        Dictionary with overall crime count, segment analyses, and highest risk segment
+    """
+    try:
+        segment_analyses = []
+        total_crimes = 0
         
-#         with httpx.Client(timeout=10.0) as client:
-#             for idx, waypoint in enumerate(waypoints):
-#                 lat = waypoint["lat"]
-#                 lon = waypoint["lon"]
+        with httpx.Client(timeout=10.0) as client:
+            for idx, waypoint in enumerate(waypoints):
+                lat = waypoint["lat"]
+                lon = waypoint["lon"]
                 
-#                 # Fetch crimes for this waypoint
-#                 response = client.get(
-#                     f"{UK_POLICE_API_BASE}/crimes-street/all-crime",
-#                     params={"lat": lat, "lng": lon}
-#                 )
-#                 response.raise_for_status()
-#                 crimes_data = response.json()
+                # Fetch crimes for this waypoint
+                response = client.get(
+                    f"{UK_POLICE_API_BASE}/crimes-street/all-crime",
+                    params={"lat": lat, "lng": lon}
+                )
+                response.raise_for_status()
+                crimes_data = response.json()
                 
-#                 if not isinstance(crimes_data, list):
-#                     crimes_data = []
+                if not isinstance(crimes_data, list):
+                    crimes_data = []
                 
-#                 # Aggregate crimes by type
-#                 crime_counts = {}
-#                 for crime in crimes_data:
-#                     category = crime.get("category", "unknown")
-#                     crime_counts[category] = crime_counts.get(category, 0) + 1
+                # Aggregate crimes by type
+                crime_counts = {}
+                for crime in crimes_data:
+                    category = crime.get("category", "unknown")
+                    crime_counts[category] = crime_counts.get(category, 0) + 1
                 
-#                 segment_crimes = len(crimes_data)
-#                 total_crimes += segment_crimes
+                segment_crimes = len(crimes_data)
+                total_crimes += segment_crimes
                 
-#                 # Get dominant crimes (top 2)
-#                 dominant_crimes = sorted(
-#                     crime_counts.items(), 
-#                     key=lambda x: x[1], 
-#                     reverse=True
-#                 )[:2]
+                # Get dominant crimes (top 2)
+                dominant_crimes = sorted(
+                    crime_counts.items(), 
+                    key=lambda x: x[1], 
+                    reverse=True
+                )[:2]
                 
-#                 segment_analyses.append({
-#                     "segment_number": idx + 1,
-#                     "location": waypoint,
-#                     "crime_count": segment_crimes,
-#                     "dominant_crimes": [{"type": c[0], "count": c[1]} for c in dominant_crimes]
-#                 })
+                segment_analyses.append({
+                    "segment_number": idx + 1,
+                    "location": waypoint,
+                    "crime_count": segment_crimes,
+                    "dominant_crimes": [{"type": c[0], "count": c[1]} for c in dominant_crimes]
+                })
         
-#         # Find highest risk segment
-#         if segment_analyses:
-#             highest_risk = max(segment_analyses, key=lambda x: x["crime_count"])
-#             avg_crimes = total_crimes / len(waypoints)
-#         else:
-#             highest_risk = None
-#             avg_crimes = 0
+        # Find highest risk segment
+        if segment_analyses:
+            highest_risk = max(segment_analyses, key=lambda x: x["crime_count"])
+            avg_crimes = total_crimes / len(waypoints)
+        else:
+            highest_risk = None
+            avg_crimes = 0
         
-#         return {
-#             "route_id": route_id,
-#             "overall_crime_count": total_crimes,
-#             "average_crime_per_segment": round(avg_crimes, 1),
-#             "segment_analyses": segment_analyses,
-#             "highest_risk_segment": {
-#                 "segment_number": highest_risk["segment_number"],
-#                 "crime_count": highest_risk["crime_count"],
-#                 "dominant_crimes": [c["type"] for c in highest_risk["dominant_crimes"]]
-#             } if highest_risk else None
-#         }
+        return {
+            "route_id": route_id,
+            "overall_crime_count": total_crimes,
+            "average_crime_per_segment": round(avg_crimes, 1),
+            "segment_analyses": segment_analyses,
+            "highest_risk_segment": {
+                "segment_number": highest_risk["segment_number"],
+                "crime_count": highest_risk["crime_count"],
+                "dominant_crimes": [c["type"] for c in highest_risk["dominant_crimes"]]
+            } if highest_risk else None
+        }
     
-#     except Exception as e:
-#         return {"error": f"Failed to analyze route safety: {str(e)}"}
+    except Exception as e:
+        return {"error": f"Failed to analyze route safety: {str(e)}"}
 
 
 # ============================================================================
