@@ -1,7 +1,8 @@
 "use client"
 
+import dynamic from "next/dynamic"
+
 import { mdiCarEmergency } from "@mdi/js";
-import MapBlock from "./_blocks/map-block";
 import ThreatLevel from "./_blocks/threat-level";
 import Card from "./_components/card";
 import NearestPolice from "./_blocks/nearest-police";
@@ -9,6 +10,8 @@ import HighlightsBlock from "./_blocks/highlights-block";
 import { useEffect, useState } from "react";
 import Skeleton from "./_screens/skeleton";
 import PermissionDenied from "./_screens/permission-denied";
+
+const MapBlock = dynamic(() => import("./_blocks/map-block"), { ssr:false })
 
 export default function Home() {
   const [data, setData] = useState(null);

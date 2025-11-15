@@ -1,9 +1,12 @@
 import Image from "next/image";
-import MapBlock from "../_blocks/map-block";
 import NearestPolice from "../_blocks/nearest-police";
 import HighlightsBlock from "../_blocks/highlights-block";
 import Card from "../_components/card";
 import { mdiCarEmergency } from "@mdi/js";
+
+import dynamic from "next/dynamic"
+
+const MapBlock = dynamic(() => import("../_blocks/map-block"), { ssr:false })
 
 export default function Skeleton() {
   return (
