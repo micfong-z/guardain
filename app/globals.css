@@ -12,6 +12,6 @@ body {
   background: rgb(var(--background-rgb));
 }
 
-/* nextjs-portal {
+nextjs-portal {
   display: none;
-} */
+}
