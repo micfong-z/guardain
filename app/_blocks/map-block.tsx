@@ -44,6 +44,9 @@ export default function MapBlock({
         {nearestPoliceStation && (
           <Marker position={nearestPoliceStation.position} icon={stationIcon}>
             <Popup>
+              <div className="font-bold mb-1">
+                Nearest Station
+              </div>
               {nearestPoliceStation.name}
               {nearestPoliceStation.contact && (
                 <div className="text-xs mt-1">
