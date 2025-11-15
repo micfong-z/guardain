@@ -178,12 +178,7 @@ function CompassPopup({
                     transformOrigin: 'center 96px'
                   }}
                 >
-                  <div
-                    className="text-neutral-500 text-sm"
-                    style={{
-                      transform: deviceHeading !== null ? `rotate(${-deviceHeading}deg)` : 'rotate(0deg)'
-                    }}
-                  >
+                  <div className="text-neutral-500 text-sm">
                     ▲
                   </div>
                 </div>
