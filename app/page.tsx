@@ -11,10 +11,15 @@ import { useEffect, useState } from "react";
 import Skeleton from "./_screens/skeleton";
 import PermissionDenied from "./_screens/permission-denied";
 
-const MapBlock = dynamic(() => import("./_blocks/map-block"), { ssr:false })
+const MapBlock = dynamic(() => import("./_blocks/map-block"), { ssr: false })
 
 export default function Home() {
-  const [data, setData] = useState(null);
+  interface Data {
+    level: number;
+    reason: string;
+  }
+
+  const [data, setData] = useState<Data | null>(null);
 
   const [loading, setLoading] = useState(1);
 
@@ -34,6 +39,7 @@ export default function Home() {
             const { latitude, longitude } = coords;
             const response = await fetch("/api/test");
             const result = await response.json();
+            console.log("Fetched data:", result);
             setData(result);
           } catch (error) {
             console.error("Geolocation error:", error);
@@ -61,7 +67,7 @@ export default function Home() {
   }
   return (
     <main className="min-h-screen">
-      <ThreatLevel />
+      <ThreatLevel level={data?.level ?? 5} description={data?.reason ?? "Reason not available"} />
       <MapBlock />
       <NearestPolice />
       <HighlightsBlock />

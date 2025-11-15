@@ -5,6 +5,7 @@ import { mdiFullscreen } from "@mdi/js";
 import { Icon } from "@mdi/react";
 
 export default function MapBlock() {
+
   return (
     <div className="bg-neutral-900 backdrop-blur-sm text-center border-b border-neutral-800 text-white h-32 relative">
       <MapContainer center={[52.2033, 0.1294]} zoom={13} zoomControl={false} scrollWheelZoom={false} className="h-32 shadow-inner shadow-black/25 invert hue-rotate-180 grayscale-[80%]">
