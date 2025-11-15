@@ -178,7 +178,7 @@ function CompassPopup({
                     transformOrigin: 'center 96px'
                   }}
                 >
-                  <div className="text-neutral-500 text-sm">
+                  <div className="text-neutral-500 text-sm pr-1">
                     ▲
                   </div>
                 </div>
