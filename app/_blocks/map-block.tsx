@@ -19,8 +19,8 @@ export default function MapBlock({
 }) {
 
   return (
-    <div className="bg-neutral-900 backdrop-blur-sm text-center border-b border-neutral-800 text-white h-32 relative">
-      <MapContainer center={[52.2033, 0.1294]} zoom={13} zoomControl={false} scrollWheelZoom={false} className="h-32 shadow-inner shadow-black/25 invert hue-rotate-180 grayscale-[80%]">
+    <div className="bg-neutral-900 backdrop-blur-sm text-center border-b border-neutral-800 text-white h-40 relative">
+      <MapContainer center={[userLat, userLon]} zoom={13} zoomControl={false} scrollWheelZoom={false} className="h-40 shadow-inner shadow-black/25 invert hue-rotate-180 grayscale-[80%]">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
