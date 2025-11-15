@@ -1,6 +1,6 @@
 "use client"
 
-import { mdiPoliceBadgeOutline, mdiNavigationVariantOutline, mdiClose } from "@mdi/js";
+import { mdiPoliceBadgeOutline, mdiNavigationVariantOutline, mdiClose, mdiArrowUp } from "@mdi/js";
 import Card from "../_components/card";
 import { IconButton } from "../_components/buttons";
 import { useState, useEffect } from "react";
@@ -11,7 +11,7 @@ function startCompassListener(callback: (compass: number) => void) {
     console.warn("DeviceOrientation API not available");
     return null;
   }
-  
+
   let absoluteListener = (e: DeviceOrientationEvent) => {
     if (!e.absolute || e.alpha == null || e.beta == null || e.gamma == null)
       return;
@@ -20,7 +20,7 @@ function startCompassListener(callback: (compass: number) => void) {
     window.removeEventListener("deviceorientation", webkitListener);
     callback(compass);
   };
-  
+
   let webkitListener = (e: any) => {
     let compass = e.webkitCompassHeading;
     if (compass != null && !isNaN(compass)) {
@@ -47,17 +47,17 @@ function startCompassListener(callback: (compass: number) => void) {
   } else {
     addListeners();
   }
-  
+
   return () => {
     window.removeEventListener("deviceorientationabsolute" as keyof WindowEventMap, absoluteListener as EventListenerOrEventListenerObject);
     window.removeEventListener("deviceorientation" as keyof WindowEventMap, webkitListener as EventListenerOrEventListenerObject);
   };
 }
 
-function CompassPopup({ 
-  onClose, 
-  stationBearing 
-}: { 
+function CompassPopup({
+  onClose,
+  stationBearing
+}: {
   onClose: () => void;
   stationBearing: number;
 }) {
@@ -83,8 +83,8 @@ function CompassPopup({
     return cleanup || undefined;
   }, []);
 
-  const arrowRotation = deviceHeading !== null 
-    ? stationBearing - deviceHeading 
+  const arrowRotation = deviceHeading !== null
+    ? stationBearing - deviceHeading
     : stationBearing;
 
   return (
@@ -96,9 +96,9 @@ function CompassPopup({
         >
           <Icon path={mdiClose} size={1} />
         </button>
-        
+
         <h3 className="text-xl font-semibold mb-4 text-white">Direction to Station</h3>
-        
+
         {!isSupported ? (
           <div className="text-center py-8">
             <p className="text-neutral-400 mb-2">Compass unavailable</p>
@@ -108,35 +108,103 @@ function CompassPopup({
           </div>
         ) : (
           <div className="flex flex-col items-center py-6">
-            <div className="relative w-48 h-48 rounded-full border-2 border-neutral-700 flex items-center justify-center bg-neutral-800/50">
-              <div className="absolute inset-0 rounded-full">
-                <div className="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-bold text-red-500">N</div>
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-neutral-500">S</div>
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-neutral-500">E</div>
-                <div className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-neutral-500">W</div>
+            <div
+              className="relative w-48 h-48 rounded-full border border-neutral-700 flex items-center justify-center"
+              style={{
+                backgroundImage: 'url(/bg-grid.svg)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            >
+              {/* Fixed downward triangle at top center (shows user's facing direction) */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pb-4">
+                <div className="text-white opacity-50 text-sm">▼</div>
               </div>
-              
-              <div 
-                className="transition-transform duration-300 ease-out"
-                style={{ 
-                  transform: `rotate(${arrowRotation}deg)` 
+
+              <div
+                className="absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-out"
+                style={{
+                  transform: deviceHeading !== null ? `rotate(${-deviceHeading}deg)` : 'rotate(0deg)'
                 }}
               >
-                <svg 
-                  width="80" 
-                  height="80" 
-                  viewBox="0 0 24 24" 
-                  className="text-white"
-                  fill="currentColor"
+                <div className="absolute top-2 left-1/2 -translate-x-1/2">
+                  <span
+                    className="text-sm font-bold text-red-500 inline-block transition-transform duration-300 ease-out"
+                    style={{
+                      transform: deviceHeading !== null ? `rotate(${deviceHeading}deg)` : 'rotate(0deg)'
+                    }}
+                  >
+                    N
+                  </span>
+                </div>
+
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
+                  <span
+                    className="text-sm font-bold text-neutral-500 inline-block transition-transform duration-300 ease-out"
+                    style={{
+                      transform: deviceHeading !== null ? `rotate(${deviceHeading}deg)` : 'rotate(0deg)'
+                    }}
+                  >
+                    S
+                  </span>
+                </div>
+
+                <div className="absolute left-2 top-1/2 -translate-y-1/2">
+                  <span
+                    className="text-sm font-bold text-neutral-500 inline-block transition-transform duration-300 ease-out"
+                    style={{
+                      transform: deviceHeading !== null ? `rotate(${deviceHeading}deg)` : 'rotate(0deg)'
+                    }}
+                  >
+                    W
+                  </span>
+                </div>
+
+                <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                  <span
+                    className="text-sm font-bold text-neutral-500 inline-block transition-transform duration-300 ease-out"
+                    style={{
+                      transform: deviceHeading !== null ? `rotate(${deviceHeading}deg)` : 'rotate(0deg)'
+                    }}
+                  >
+                    E
+                  </span>
+                </div>
+
+                <div
+                  className="absolute top-0 left-1/2 -translate-x-1/2"
+                  style={{
+                    transform: `rotate(${stationBearing}deg)`,
+                    transformOrigin: 'center 96px'
+                  }}
                 >
-                  <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" />
-                </svg>
+                  <div
+                    className="text-neutral-500 text-sm"
+                    style={{
+                      transform: deviceHeading !== null ? `rotate(${deviceHeading}deg)` : 'rotate(0deg)'
+                    }}
+                  >
+                    ▲
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className="transition-transform duration-300 ease-out"
+                style={{
+                  transform: `rotate(${arrowRotation}deg)`
+                }}
+              >
+                <Icon path={mdiArrowUp}
+                  size={4}
+                  color="white"
+                />
               </div>
             </div>
-            
+
             <p className="text-sm text-neutral-400 mt-4 text-center">
-              {deviceHeading !== null 
-                ? "Arrow points towards Cambridge Police Station" 
+              {deviceHeading !== null
+                ? "Facing " + Math.round((stationBearing - deviceHeading + 360) % 360) + "°"
                 : "Waiting for compass data..."}
             </p>
           </div>
@@ -148,7 +216,7 @@ function CompassPopup({
 
 export default function NearestPolice() {
   const [showCompass, setShowCompass] = useState(false);
-  
+
   // For this example, assuming station is at bearing 45° (northeast)
   // In production, calculate this from user location and station coordinates
   const stationBearing = 45;
@@ -165,10 +233,10 @@ export default function NearestPolice() {
               Currently Open · 0.5 mi
             </div>
           </div>
-          <IconButton 
-            iconPath={mdiNavigationVariantOutline} 
-            size={1.2} 
-            className="opacity-50 hover:opacity-100 transition-opacity cursor-pointer" 
+          <IconButton
+            iconPath={mdiNavigationVariantOutline}
+            size={1.2}
+            className="opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
             onClick={() => {
               setShowCompass(true)
               console.log("Station Bearing:", stationBearing);
@@ -176,10 +244,10 @@ export default function NearestPolice() {
           />
         </div>
       </Card>
-      
+
       {showCompass && (
-        <CompassPopup 
-          onClose={() => setShowCompass(false)} 
+        <CompassPopup
+          onClose={() => setShowCompass(false)}
           stationBearing={stationBearing}
         />
       )}
