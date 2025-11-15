@@ -48,16 +48,17 @@ class MCPClient:
         # List available tools
         response = await self.session.list_tools()
         tools = response.tools
-        print("\nConnected to server with tools:", [tool.name for tool in tools])
+        #print("\nConnected to server with tools:", [tool.name for tool in tools])
 
-    async def process_query(self, query: str) -> str:
-        """Process a query using Claude and available tools"""
+    async def process_query(self) -> str:
 
         current_time = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(time.time()))
         latitude = 52.10382
+        '''记得删掉！CHANGES_REQUIRED'''
         longitude = 0.12308
+        '''记得删掉！CHANGES_REQUIRED'''
 
-        INITIAL_PROMPT= f"""Time = {current_time}, Latitude = {latitude}, Longitude = {longitude}
+        CLAUDE_PROMPT= f"""Time = {current_time}, Latitude = {latitude}, Longitude = {longitude}
                         You are a Regional Safety Assessment Assistant. Provide objective safety risk assessments based on user's time and location. Follow the exact workflow. Output ONLY the final assessment in the specified format.
                         Workflow
                         Step 1: Weather Query (ALWAYS)
@@ -132,7 +133,7 @@ class MCPClient:
         messages = [
             {
                 "role": "user",
-                "content": INITIAL_PROMPT #CLAUDE_PROMPT
+                "content": CLAUDE_PROMPT
             }
         ]
 
@@ -187,23 +188,13 @@ class MCPClient:
 
         return "\n".join(final_text)
 
-    async def chat_loop(self):
-        """Run an interactive chat loop"""
-        print("\nMCP Client Started!")
-        print("Type your queries or 'quit' to exit.")
+    async def chat(self):
+        try:
+            response = await self.process_query()
+        except Exception as e:
+            print(f"\nError: {str(e)}")
 
-        while True:
-            try:
-                query = input("\nQuery: ").strip()
-
-                if query.lower() == 'quit':
-                    break
-
-                response = await self.process_query(query)
-                print("\n" + response)
-
-            except Exception as e:
-                print(f"\nError: {str(e)}")
+        return response
 
     async def cleanup(self):
         """Clean up resources"""
@@ -212,11 +203,17 @@ class MCPClient:
 
 async def get_danger_and_description():
     client = MCPClient()
-    try:
-        await client.connect_to_server('MCP_server.py')
-        await client.chat_loop()
-    finally:
-        await client.cleanup()
+    await client.connect_to_server('MCP_server.py')
+    response = await client.chat()
+    lines = response.split('\n')
+
+    '''做格式检测！CHANGES_REQUIRED'''
+
+    await client.cleanup()
+
+    print(response)
+    '''记得删掉！CHANGES_REQUIRED'''
+    return response
 
 
 if __name__ == "__main__":
