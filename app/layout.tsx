@@ -1,3 +1,4 @@
+import QuickActions from './_blocks/quick-actions'
 import './globals.css'
 import { Inter } from 'next/font/google'
 
@@ -15,7 +16,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossOrigin="" />
+        <div className="grow bg-repeat bg-[url('/bg-grid.svg')] bg-opacity-50">
+          {children}
+          <QuickActions />
+        </div>
+      </body>
     </html>
   )
 }
