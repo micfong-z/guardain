@@ -10,6 +10,7 @@ import HighlightsBlock from "./_blocks/highlights-block";
 import { useEffect, useState } from "react";
 import Skeleton from "./_screens/skeleton";
 import PermissionDenied from "./_screens/permission-denied";
+import { getNearestPoliceStation } from "./_api/police-station";
 
 const MapBlock = dynamic(() => import("./_blocks/map-block"), { ssr: false })
 
@@ -42,15 +43,6 @@ export default function Home() {
               navigator.geolocation.getCurrentPosition(resolve, reject);
             });
 
-          const getNearestPoliceStation = async (lat: number, lon: number) => {
-            const response = await fetch(`https://data.police.uk/api/locate-neighbourhood?q=${lat},${lon}`);
-            const data = await response.json();
-            const force = data.force;
-            const neighbourhood = data.neighbourhood;
-            const forceResponse = await fetch(`https://data.police.uk/api/${force}/${neighbourhood}`);
-            return await forceResponse.json();
-          };
-
           try {
             const { coords } = await getPosition();
             const { latitude, longitude } = coords;
@@ -58,13 +50,11 @@ export default function Home() {
             setUserLon(longitude);
             const [response, policeStation] = await Promise.all([fetch("/api/test"), getNearestPoliceStation(latitude, longitude)]);
             const result: Data = await response.json();
-            console.log("Fetched data:", result);
-            console.log("Nearest police station data:", policeStation);
             result.nearestPoliceStation = {
               name: policeStation.name,
-              position: [parseFloat(policeStation.centre.latitude), parseFloat(policeStation.centre.longitude)],
-              contact: policeStation.contact_details,
+              position: [policeStation.coords.latitude, policeStation.coords.longitude],
             };
+            console.log("Nearest Police Station Data:", policeStation);
             setData(result);
           } catch (error) {
             console.error("Geolocation error:", error);
