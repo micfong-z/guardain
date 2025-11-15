@@ -35,9 +35,12 @@ export function ShareButton() {
   )
 }
 
-export function IconButton({ iconPath, size, className }: { iconPath: string; size: number; className?: string }) {
+export function IconButton({ iconPath, size, className, onClick }: { iconPath: string; size: number; className?: string; onClick?: () => void }) {
   return (
-    <button className="font-medium bg-white bg-opacity-5 border-neutral-700 border text-white p-1 shadow-lg hover:bg-opacity-10 active:bg-opacity-20 transition aspect-square">
+    <button 
+      className="font-medium bg-white bg-opacity-5 border-neutral-700 border text-white p-1 shadow-lg hover:bg-opacity-10 active:bg-opacity-20 transition aspect-square"
+      onClick={onClick}
+    >
       <Icon path={iconPath}
         title={"Icon Button"}
         className={`inline-block ${className}`}
