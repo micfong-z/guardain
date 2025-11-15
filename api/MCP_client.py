@@ -53,68 +53,57 @@ class MCPClient:
     async def process_query(self) -> str:
 
         current_time = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(time.time()))
-        latitude = 52.10382
+        latitude = 52.20641
         '''记得删掉！CHANGES_REQUIRED'''
-        longitude = 0.12308
+        longitude = 0.12185
         '''记得删掉！CHANGES_REQUIRED'''
 
         CLAUDE_PROMPT= f"""Time = {current_time}, Latitude = {latitude}, Longitude = {longitude}
                         You are a Regional Safety Assessment Assistant. Provide objective safety risk assessments based on user's time and location. Follow the exact workflow. Output ONLY the final assessment in the specified format.
+                        
                         Workflow
                         Step 1: Weather Query (ALWAYS)
                         Call Tool2 immediately upon receiving location.
-                        Step 2: Crime Data Query (CONDITIONAL)
-                        Call Tool1 if ANY condition met:
                         
-                        Time is 20:00-06:00 (night)
-                        Severe weather (heavy rain/fog/snow, visibility <1km)
-                        User explicitly requests assessment
+                        Step 2: Crime Data Query (CONDITIONAL)
+                            Call Tool1 if ANY condition met:
+                                Time is 20:00-06:00 (night)
+                                Severe weather (heavy rain/fog/snow, visibility <1km)
+                                User explicitly requests assessment
                         
                         Step 3: Calculate Risk Index (if Tool1 called)
-                        Crime Scores:
-                        Violent/Robbery: 9 | Burglary/Weapons: 7 | Vehicle/Pickpocketing: 5 | Minor theft: 3 | Anti-social: 2
-                        Time Decay:
-                        ≤1mo: ×1.0 | 2-3mo: ×0.75 | 4-6mo: ×0.5 | >6mo: ×0.25
-                        Formula:
-                        
-                        Incident_Score = Crime_Score × Time_Decay
-                        Average_Score = Σ(Incident_Score) / Total_Incidents
-                        Density_Coeff = [1.0 (≤5), 1.2 (6-15), 1.4 (16-30), 1.6 (>30)]
-                        Preliminary_RI = Average_Score × Density_Coeff
-                        Environment_Modifier = [1.0 (day+good), 1.2 (night), 1.15 (bad weather), 1.38 (both)]
-                        Final_RI = Preliminary_RI × Environment_Modifier
+                            Crime Scores:
+                            Violent/Robbery: 9 | Burglary/Weapons: 7 | Vehicle/Pickpocketing: 5 | Minor theft: 3 | Anti-social: 2
+                            Time Decay:
+                            ≤1mo: ×1.0 | 2-3mo: ×0.75 | 4-6mo: ×0.5 | >6mo: ×0.25
+                            Formula:
+                                Incident_Score = Crime_Score × Time_Decay
+                                Average_Score = Σ(Incident_Score) / Total_Incidents
+                                Density_Coeff = [1.0 (≤5), 1.2 (6-15), 1.4 (16-30), 1.6 (>30)]
+                                Preliminary_RI = Average_Score × Density_Coeff
+                                Environment_Modifier = [1.0 (day+good), 1.2 (night), 1.15 (bad weather), 1.38 (both)]
+                                Final_RI = Preliminary_RI × Environment_Modifier
                         
                         Step 4: Classify & Act
-                        Levels:
-                        1 (Low): 0-2.5 | 2 (Lower): 2.5-5.0 | 3 (Moderate): 5.0-7.5 | 4 (Higher): 7.5-10.0 | 5 (High): ≥10.0
-                        Action: If level ≥4, call Tool3 (Police Station).
-                        
+                            Levels:
+                            1 (Low): 0-2.5 | 2 (Lower): 2.5-5.0 | 3 (Moderate): 5.0-7.5 | 4 (Higher): 7.5-10.0 | 5 (High): ≥10.0
+                            Action:
+                                Conclude a reason why it is dangerous or not, no more than 50 words in total.
                         Step 5: Output Format
-                        If Tool1 NOT called:
-                        Status: Insufficient data for risk assessment
-                        Location: [Area]
-                        Time: [YYYY-MM-DD HH:MM]
-                        Weather: [Description]
-                        If Level 1-3:
-                        [1,3]
-                        If Level 4-5:
-                        [4-5] 
-                        【Nearest Police Station】
-                        Name: [Name]
-                        Distance: [XXX] meters, [N/NE/E/SE/S/SW/W/NW]
-                        Output Rules
-                        INCLUDE ONLY:
-                        Integer of level
-                        (Nearest Police Station if level is 4-5
+                            [1,5] (INCLUDE ONLY:Integer of level)
+                            Reason:
+                        
                         
                         NEVER INCLUDE:
-                        
-                        Conversational text
-                        Methodology explanations
-                        Disclaimers or apologies
-                        Safety advice (unless level ≥4)
-                        Assumptions or inferences
-                        
+                            Tool call descriptions: [Calling tool...]
+                            Conversational text
+                            Methodology explanations
+                            Disclaimers or apologies
+                            Safety advice (unless level ≥4)
+                            Assumptions or inferences
+                            Step1&2&3&4s' process
+                            
+        
                         Error Handling
                         If tool fails:
                         【Safety Assessment】
@@ -206,14 +195,37 @@ async def get_danger_and_description():
     await client.connect_to_server('MCP_server.py')
     response = await client.chat()
     lines = response.split('\n')
+    # Continuously remove blank lines until no further element to be removed
+    try:
+        while True:
+            lines.remove('')
+    except:
+        pass
 
-    '''做格式检测！CHANGES_REQUIRED'''
+    """
+    Format of lines：
+    xxx xxx
+    a digit of danger level
+    an explanation on why
+    """
+
+    while not lines[-2].isdigit():
+        print("\033[34mWrong format, retrying...\033[0m")
+        response = await client.chat()
+        lines = response.split('\n')
+        lines.remove('')
+
+    danger_level = int(lines[-2])
+    reason = lines[-1]
+    for kwreason in ['Reason:','Reasons:','reason:','reasons:']:
+        reason = reason.replace(kwreason,'').lstrip()
 
     await client.cleanup()
 
     print(response)
     '''记得删掉！CHANGES_REQUIRED'''
-    return response
+
+    return (danger_level, reason)
 
 
 if __name__ == "__main__":
