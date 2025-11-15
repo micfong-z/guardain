@@ -20,6 +20,8 @@ export default function Home() {
   }
 
   const [data, setData] = useState<Data | null>(null);
+  const [userLat, setUserLat] = useState<number | null>(null);
+  const [userLon, setUserLon] = useState<number | null>(null);
 
   const [loading, setLoading] = useState(1);
 
@@ -37,6 +39,8 @@ export default function Home() {
           try {
             const { coords } = await getPosition();
             const { latitude, longitude } = coords;
+            setUserLat(latitude);
+            setUserLon(longitude);
             const response = await fetch("/api/test");
             const result = await response.json();
             console.log("Fetched data:", result);
@@ -69,7 +73,7 @@ export default function Home() {
     <main className="min-h-screen">
       <ThreatLevel level={data?.level ?? 5} description={data?.reason ?? "Reason not available"} />
       <MapBlock />
-      <NearestPolice />
+      <NearestPolice userLat={userLat ?? 0} userLon={userLon ?? 0} />
       <HighlightsBlock />
       <Card title="Incidents" iconPath={mdiCarEmergency}>
         <p className="text-sm">

@@ -1,8 +1,4 @@
 import Image from "next/image";
-import NearestPolice from "../_blocks/nearest-police";
-import HighlightsBlock from "../_blocks/highlights-block";
-import Card from "../_components/card";
-import { mdiCarEmergency } from "@mdi/js";
 
 import dynamic from "next/dynamic"
 
@@ -22,14 +18,14 @@ export default function Skeleton() {
           </p>
         </div>
       </div>
-      <MapBlock />
+      {/* <MapBlock />
       <NearestPolice />
       <HighlightsBlock />
       <Card title="Incidents" iconPath={mdiCarEmergency}>
         <p className="text-sm">
           No incidents reported.
         </p>
-      </Card>
+      </Card> */}
     </main>
   )
 }

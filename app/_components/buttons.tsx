@@ -50,3 +50,19 @@ export function IconButton({ iconPath, size, className, onClick }: { iconPath: s
     </button>
   )
 }
+
+export function LinkButton({ href, iconPath, text }: { href: string; iconPath: string; text: string }) {
+  return (
+    <Link href={href}
+      className="font-medium bg-white bg-opacity-5 border-neutral-700 border text-white px-4 py-2 shadow-lg hover:bg-opacity-10 active:bg-opacity-20 transition flex justify-center items-center"
+    >
+      <Icon path={iconPath}
+        title={"Link Button"}
+        className='inline-block mr-1'
+        size={0.8}
+        color="white"
+      />
+      <span>{text}</span>
+    </Link>
+  )
+}
