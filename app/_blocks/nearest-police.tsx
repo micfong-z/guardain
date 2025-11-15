@@ -99,7 +99,7 @@ function CompassPopup({
 
         <h3 className="text-xl font-semibold mb-4 text-white">Direction to Station</h3>
 
-        {!isSupported ? (
+        {!isSupported || deviceHeading === null ? (
           <div className="text-center py-8">
             <p className="text-neutral-400 mb-2">Compass unavailable</p>
             <p className="text-sm text-neutral-500">
@@ -181,7 +181,7 @@ function CompassPopup({
                   <div
                     className="text-neutral-500 text-sm"
                     style={{
-                      transform: deviceHeading !== null ? `rotate(${deviceHeading}deg)` : 'rotate(0deg)'
+                      transform: deviceHeading !== null ? `rotate(${-deviceHeading}deg)` : 'rotate(0deg)'
                     }}
                   >
                     ▲
@@ -203,9 +203,10 @@ function CompassPopup({
             </div>
 
             <p className="text-sm text-neutral-400 mt-4 text-center">
-              {deviceHeading !== null
-                ? "Facing " + Math.round((stationBearing - deviceHeading + 360) % 360) + "°"
-                : "Waiting for compass data..."}
+              Facing {Math.round((deviceHeading) % 360)}°
+            </p>
+            <p className="text-sm text-neutral-400 mt-1 text-center">
+              Station at {Math.round(stationBearing)}°
             </p>
           </div>
         )}
