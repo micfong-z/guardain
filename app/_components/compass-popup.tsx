@@ -132,14 +132,14 @@ export default function CompassPopup({
               <div
                 className="absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-out"
                 style={{
-                  transform: deviceHeading !== null ? `rotate(${-deviceHeading}deg)` : 'rotate(0deg)'
+                  transform: deviceHeading !== null ? `rotate(${-deviceHeading % 360}deg)` : 'rotate(0deg)'
                 }}
               >
                 <div className="absolute top-2 left-1/2 -translate-x-1/2">
                   <span
                     className="text-sm font-bold text-red-500 inline-block transition-transform duration-300 ease-out"
                     style={{
-                      transform: deviceHeading !== null ? `rotate(${deviceHeading}deg)` : 'rotate(0deg)'
+                      transform: deviceHeading !== null ? `rotate(${deviceHeading % 360}deg)` : 'rotate(0deg)'
                     }}
                   >
                     N
@@ -150,7 +150,7 @@ export default function CompassPopup({
                   <span
                     className="text-sm font-bold text-neutral-500 inline-block transition-transform duration-300 ease-out"
                     style={{
-                      transform: deviceHeading !== null ? `rotate(${deviceHeading}deg)` : 'rotate(0deg)'
+                      transform: deviceHeading !== null ? `rotate(${deviceHeading % 360}deg)` : 'rotate(0deg)'
                     }}
                   >
                     S
@@ -161,7 +161,7 @@ export default function CompassPopup({
                   <span
                     className="text-sm font-bold text-neutral-500 inline-block transition-transform duration-300 ease-out"
                     style={{
-                      transform: deviceHeading !== null ? `rotate(${deviceHeading}deg)` : 'rotate(0deg)'
+                      transform: deviceHeading !== null ? `rotate(${deviceHeading % 360}deg)` : 'rotate(0deg)'
                     }}
                   >
                     W
@@ -172,7 +172,7 @@ export default function CompassPopup({
                   <span
                     className="text-sm font-bold text-neutral-500 inline-block transition-transform duration-300 ease-out"
                     style={{
-                      transform: deviceHeading !== null ? `rotate(${deviceHeading}deg)` : 'rotate(0deg)'
+                      transform: deviceHeading !== null ? `rotate(${deviceHeading % 360}deg)` : 'rotate(0deg)'
                     }}
                   >
                     E
@@ -183,7 +183,7 @@ export default function CompassPopup({
               <div
                 className="transition-transform duration-300 ease-out"
                 style={{
-                  transform: `rotate(${arrowRotation}deg)`
+                  transform: `rotate(${arrowRotation % 360}deg)`
                 }}
               >
                 <Icon path={mdiArrowUp}
