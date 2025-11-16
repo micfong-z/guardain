@@ -49,7 +49,7 @@ export default function Home() {
             const { latitude, longitude } = coords;
             setUserLat(latitude);
             setUserLon(longitude);
-            const [response, policeStation] = await Promise.all([fetch("/api/test"), getNearestPoliceStation(latitude, longitude)]);
+            const [response, policeStation] = await Promise.all([fetch(`/api/mcp?lat=${latitude}&lon=${longitude}`), getNearestPoliceStation(latitude, longitude)]);
             const result: Data = await response.json();
             result.nearestPoliceStation = {
               name: policeStation.name,

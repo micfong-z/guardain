@@ -234,7 +234,7 @@ class MCPClient:
 
 async def get_danger_and_description(latitude, longitude):
     client = MCPClient()
-    await client.connect_to_server('MCP_server.py')
+    await client.connect_to_server('api/MCP_server.py')
     response = await client.chat(latitude, longitude)
     lines = response.split('\n')
     # Continuously remove blank lines until no further element to be removed
