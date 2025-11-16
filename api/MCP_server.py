@@ -115,7 +115,9 @@ def get_crime_summary(latitude: float, longitude: float):
 
     Returns:
         A text message containing:
-        1. Top 3 types of crime
+        1. Calculated Risk Index (WITHOUT weights from the weather and time)
+        2. Total number of crimes last month
+        3. Top 3 types of crime with the highest individual risk index
     """
 
     CRIME_FACTOR = {"robbery": 9,
@@ -152,9 +154,6 @@ def get_crime_summary(latitude: float, longitude: float):
             else:
                 crime_score[key] = val * 2
                 risk_index += val * 2
-
-        # Get month from first crime
-        month = crimes_data[0].get("month", "unknown") if crimes_data else "unknown"
 
         # Get top 3 crime scores
         top_crimes = sorted(crime_score.items(), key=lambda x: x[1], reverse=True)[:3]
