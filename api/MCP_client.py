@@ -50,13 +50,9 @@ class MCPClient:
         tools = response.tools
         #print("\nConnected to server with tools:", [tool.name for tool in tools])
 
-    async def process_query(self) -> str:
+    async def process_query(self, latitude: float, longitude: float) -> str:
 
         current_time = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(time.time()))
-        latitude = 52.20641
-        '''记得删掉！CHANGES_REQUIRED'''
-        longitude = 0.12185
-        '''记得删掉！CHANGES_REQUIRED'''
 
         SYSTEM_PROMPT = f"""You are a Regional Safety Assessment Assistant integrated with MCP tools.
 
@@ -223,9 +219,9 @@ class MCPClient:
 
         return "\n".join(final_text)
 
-    async def chat(self):
+    async def chat(self, latitude, longitude):
         try:
-            response = await self.process_query()
+            response = await self.process_query(latitude=latitude, longitude=longitude)
         except Exception as e:
             print(f"\nError: {str(e)}")
 
@@ -236,10 +232,10 @@ class MCPClient:
         await self.exit_stack.aclose()
 
 
-async def get_danger_and_description():
+async def get_danger_and_description(latitude, longitude):
     client = MCPClient()
     await client.connect_to_server('MCP_server.py')
-    response = await client.chat()
+    response = await client.chat(latitude, longitude)
     lines = response.split('\n')
     # Continuously remove blank lines until no further element to be removed
     try:
@@ -268,4 +264,4 @@ async def get_danger_and_description():
 
 
 if __name__ == "__main__":
-    asyncio.run(get_danger_and_description())
+    asyncio.run(get_danger_and_description(latitude=52.01231, longitude=0.12035))
