@@ -23,8 +23,9 @@ def test_api():
 def mcp_api():
     longitude = request.args.get('lon')
     latitude = request.args.get('lat')
-    level, reason = asyncio.run(get_danger_and_description(longitude, latitude))
+    level, reason, short_reason = asyncio.run(get_danger_and_description(longitude, latitude))
     return {
         "level": level,
         "reason": reason,
+        "short_reason": short_reason,
     }
