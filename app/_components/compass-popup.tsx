@@ -130,14 +130,14 @@ export default function CompassPopup({
               </div>
 
               <div
-                className="absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-out"
+                className="absolute inset-0 flex items-center justify-center "
                 style={{
                   transform: deviceHeading !== null ? `rotate(${-deviceHeading % 360}deg)` : 'rotate(0deg)'
                 }}
               >
                 <div className="absolute top-2 left-1/2 -translate-x-1/2">
                   <span
-                    className="text-sm font-bold text-red-500 inline-block transition-transform duration-300 ease-out"
+                    className="text-sm font-bold text-red-500 inline-block "
                     style={{
                       transform: deviceHeading !== null ? `rotate(${deviceHeading % 360}deg)` : 'rotate(0deg)'
                     }}
@@ -148,7 +148,7 @@ export default function CompassPopup({
 
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
                   <span
-                    className="text-sm font-bold text-neutral-500 inline-block transition-transform duration-300 ease-out"
+                    className="text-sm font-bold text-neutral-500 inline-block "
                     style={{
                       transform: deviceHeading !== null ? `rotate(${deviceHeading % 360}deg)` : 'rotate(0deg)'
                     }}
@@ -159,7 +159,7 @@ export default function CompassPopup({
 
                 <div className="absolute left-2 top-1/2 -translate-y-1/2">
                   <span
-                    className="text-sm font-bold text-neutral-500 inline-block transition-transform duration-300 ease-out"
+                    className="text-sm font-bold text-neutral-500 inline-block "
                     style={{
                       transform: deviceHeading !== null ? `rotate(${deviceHeading % 360}deg)` : 'rotate(0deg)'
                     }}
@@ -170,7 +170,7 @@ export default function CompassPopup({
 
                 <div className="absolute right-2 top-1/2 -translate-y-1/2">
                   <span
-                    className="text-sm font-bold text-neutral-500 inline-block transition-transform duration-300 ease-out"
+                    className="text-sm font-bold text-neutral-500 inline-block "
                     style={{
                       transform: deviceHeading !== null ? `rotate(${deviceHeading % 360}deg)` : 'rotate(0deg)'
                     }}
@@ -181,7 +181,7 @@ export default function CompassPopup({
               </div>
 
               <div
-                className="transition-transform duration-300 ease-out"
+                className=""
                 style={{
                   transform: `rotate(${arrowRotation % 360}deg)`
                 }}
