@@ -2,11 +2,10 @@ from flask import Flask
 from flask import request
 from random import randint
 from time import sleep
-app = Flask(__name__)
+import asyncio
 
-@app.route("/api/python")
-def hello_world():
-    return "<p>Hello, World!</p>"
+from api.MCP_client import get_danger_and_description
+app = Flask(__name__)
 
 @app.route("/api/test")
 def test_api():
@@ -17,4 +16,14 @@ def test_api():
     return {
         "level": randint(1, 5),
         "reason": "High threat detected due to multiple nearby incidents. Seek shelter immediately.",
+    }
+
+@app.route("/api/mcp")
+def mcp_api():
+    longitude = request.args.get('lon')
+    latitude = request.args.get('lat')
+    level, reason = asyncio.run(get_danger_and_description(longitude, latitude))
+    return {
+        "level": level,
+        "reason": reason,
     }
