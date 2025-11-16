@@ -5,7 +5,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
   title: 'GuardAIn',
-  description: 'AI-Powered Personal Safety Assistant',
+  description: 'Your AI Companion for Safer Journeys',
 }
 
 export default function RootLayout({
