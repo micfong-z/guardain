@@ -56,10 +56,11 @@ class MCPClient:
 
         SYSTEM_PROMPT = f"""You are a Regional Safety Assessment Assistant integrated with MCP tools.
                                 1) OUTPUT CONTROL
-                                   - FINAL THREE LINES MUST BE:
+                                   - FINAL FOUR LINES MUST BE:
                                         <Line 1> an integer 1–5 (the safety level)
                                         <Line 2> a decimal value representing RI (no units)
                                         <Line 3> Reason: <≤50 words>
+                                        <Line 4> <Brief summary, less than 10 words>
                                    
                                 2) WORKFLOW
                                     STEP 1: call Crime Tool
@@ -70,6 +71,7 @@ class MCPClient:
                                         <Line 1> integer 1–5
                                         <Line 2> The value of Final_RI
                                         <Line 3> Reason: <≤50 words>
+                                        <Line 4> <Brief summary, less than 10 words>
                                             
                                 3) TOOL CALL RESTRICTIONS
                                    - You may ONLY call these tools:
@@ -78,10 +80,11 @@ class MCPClient:
                                    - You MUST NOT call any other tool (e.g., time_context, location_info, etc.).
 
                                 4) FINAL OUTPUT FORMAT (STRICT)
-                                   After all tools have returned, output EXACTLY these three lines:
+                                   After all tools have returned, output EXACTLY these four lines:
                                        <Line 1> an integer 1–5 (the safety level)
                                        <Line 2> a decimal value representing Final_RI (no units)
                                        <Line 3> Reason: <≤50 words>
+                                       <Line 4> <Brief summary, less than 10 words>
 
                                    - NO brackets
                                    - NO labels other than the word "Reason:"
@@ -89,31 +92,50 @@ class MCPClient:
                                    - NO additional text or whitespace
                                    - NO explanations, disclaimers, or formulas
 
-                                5) RI Classification:
-                                    Using the data get from crime tool and weather tool, ANALYZE and classify it into 5 level,from the safest level1 to the most dangerous level5. 
+                                5) SAFETY LEVEL Classification:
+                                    Using the data get from CRIME TOOL, WEATHER TOOL, and CURRENT TIME, ANALYZE and classify it into 5 level,from the safest level1 to the most dangerous level5. 
                                     MUST give an INTEGER FROM 1 TO 5
-                                    REFERENCE FOLLOWING EXAMPLES:
-                                        LEVEL 1: RI = 1000
-                                        LEVEL 2: RI = 3000
-                                        LEVEL 3: RI = 5000
-                                        LEVEL 4: RI = 6000
-                                        LEVEL 5: RI = 8000
+                                    According to your past performances, you can label your safety level at LOWER risks than you originally thought.
+                                    MEANING OF NUMBER OF CASES:
+                                        Few Occurrence = 300 cases
+                                        Mid-level Occurrence = 800 cases
+                                        High-level Occurrence = 2000 cases
+                                    MEANING OF TIME:
+                                        During the day, it is relatively SAFE
+                                        During early nights (e.g. before 9pm), it is at MODERATE RISK
+                                        During late nights, it is at HIGHER RISK
+                                    REFERENCE FOLLOWING EXAMPLES RESTRICTEDLY:
+                                        Low Danger Level (1): RISK INDEX = 1000 (You can walk solely safely)
+                                        Mid-low Danger Level (2): RISK INDEX = 3000 (You are quite safe, but please do not take unfamiliar shortcuts when walking)
+                                        Mid Danger Level (3): RISK INDEX = 5000 (You are at some risks, please be aware of environments around)
+                                        Mid-high Danger Level (4): RISK INDEX = 8000 (Even with good visibility, you may be in danger)
+                                        High Danger Level (5): RISK INDEX = 10000 (If possible, leave this area immediately, you life safety is at high risk)
+                                    Remember that the ranking of 3 highest-scored criminal cases DO NOT MATTER, it only illustrates roughly the percentage of top crimes.
+                                    You may refer to the following examples:
+                                        1. 220 cases in total; violent crime = 93 cases, robbery = 62 cases, other crime = 17 cases; RI=950, time = 8:30 AM, good weather -> Low risk level 1
+                                        2. 510 cases in total; robbery = 133 cases, violent crime = 91 cases, burglary = 55 cases; RI=2550, time = 6:15 PM, bad weather -> Mid risk level 3
+                                        3. 2920 cases in total; violent crime = 802 cases, pickpocketing = 618 cases, burglary = 229 cases; RI=7422, time = 12:15 PM, good weather -> High risk level 5
 
                                 7) REASON RULES
                                    - Provide ≤50 words.
-                                    - No workflow references.
+                                   - Think step by step.
                                    - No formulas.
                                    - No assumptions or safety instructions.
+                                
+                                8) BRIEF SUMMARY RULES
+                                   - Provide < 10 words.
+                                   - Condense contents in your reason shorter.
 
                                 You must comply perfectly.
                                 """
 
         USER_PROMPT = f"""Time = {current_time}, Latitude = {latitude}, Longitude = {longitude}
                                 
-                                The FINAL THREE LINES MUST be:
+                                The FINAL FOUR LINES MUST be:
                                    <Line 1> integer 1–5
                                    <Line 2> The value of RI
                                    <Line 3> Reason: <≤50 words>
+                                   <Line 4> <Brief summary, less than 10 words>
                                 """
 
         messages = [
@@ -200,24 +222,30 @@ async def get_danger_and_description(latitude, longitude):
     except:
         pass
 
-    while not lines[-3].isdigit():
+    while not lines[-4].isdigit():
         print("\033[34mWrong format, retrying...\033[0m")
         response = await client.chat()
         lines = response.split('\n')
         lines.remove('')
 
-    danger_level = int(lines[-3])
-    reason = lines[-1]
+    danger_level = int(lines[-4])
+    if danger_level == 3 or danger_level == 4:
+        danger_level -= 1
+    reason = lines[-2]
     for kwreason in ['Reason:','Reasons:','reason:','reasons:']:
         reason = reason.replace(kwreason,'').lstrip()
+    briefing = lines[-1]
 
     await client.cleanup()
 
     print(response)
-    '''记得删掉！CHANGES_REQUIRED'''
+    print('-'*20)
+    print(danger_level)
+    print(reason)
+    print(briefing)
 
-    return (danger_level, reason)
+    return (danger_level, reason, briefing)
 
 
 if __name__ == "__main__":
-    asyncio.run(get_danger_and_description(latitude=51.7548, longitude=-1.2544))
+    asyncio.run(get_danger_and_description(latitude=51.5309, longitude=-0.1229))
