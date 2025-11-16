@@ -583,7 +583,7 @@ def get_route_options(
     }
 
 
-@mcp.tool()
+
 def analyze_route_safety_by_id(route_id: str) -> Dict:
     """Analyze crime statistics for a route using its ID.
     
@@ -676,7 +676,7 @@ def analyze_route_safety_by_id(route_id: str) -> Dict:
 # HELPER TOOLS FOR CACHE MANAGEMENT
 # ============================================================================
 
-@mcp.tool()
+
 def list_cached_routes() -> Dict:
     """List all currently cached routes.
     
@@ -692,7 +692,7 @@ def list_cached_routes() -> Dict:
     }
 
 
-@mcp.tool()
+
 def clear_route_cache() -> Dict:
     """Clear the route cache to free memory.
     
@@ -981,7 +981,7 @@ def get_crime_by_types(latitude: float, longitude: float, crime_types: List[str]
 # ADVANCED TOOLS (COMPARISON & ANALYSIS)
 # ============================================================================
 
-@mcp.tool()
+
 def compare_routes_by_id(route_ids: List[str]) -> Dict:
     """Compare multiple routes by their IDs (RECOMMENDED).
     
@@ -1107,7 +1107,7 @@ def compare_routes_by_id(route_ids: List[str]) -> Dict:
         "failed_routes": failed_routes if failed_routes else None
     }
 
-@mcp.tool()
+
 def get_and_compare_routes(
     start_lat: float,
     start_lon: float,

@@ -55,115 +55,71 @@ class MCPClient:
         current_time = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(time.time()))
 
         SYSTEM_PROMPT = f"""You are a Regional Safety Assessment Assistant integrated with MCP tools.
+                                1) OUTPUT CONTROL
+                                   - FINAL THREE LINES MUST BE:
+                                        <Line 1> an integer 1–5 (the safety level)
+                                        <Line 2> a decimal value representing RI (no units)
+                                        <Line 3> Reason: <≤50 words>
+                                   
+                                2) WORKFLOW
+                                    STEP 1: call Crime Tool
+                                    STEP 2: call Weather Tool
+                                    STEP 3: classify Safety level
+                                    STEP 4: Generate reasoning
+                                    STEP 5: OUTPUT:
+                                        <Line 1> integer 1–5
+                                        <Line 2> The value of Final_RI
+                                        <Line 3> Reason: <≤50 words>
+                                            
+                                3) TOOL CALL RESTRICTIONS
+                                   - You may ONLY call these tools:
+                                       • Weather Tool (get_weather_conditions)
+                                       • Crime Tool (get_crime_summary)
+                                   - You MUST NOT call any other tool (e.g., time_context, location_info, etc.).
 
-                        ===============================================================================
-                        SYSTEM-LEVEL HARD RULES (THESE OVERRIDE ALL OTHER INSTRUCTIONS)
-                        ===============================================================================
+                                4) FINAL OUTPUT FORMAT (STRICT)
+                                   After all tools have returned, output EXACTLY these three lines:
+                                       <Line 1> an integer 1–5 (the safety level)
+                                       <Line 2> a decimal value representing Final_RI (no units)
+                                       <Line 3> Reason: <≤50 words>
 
-                        1) OUTPUT CONTROL
-                           - You MUST NOT output ANY text when receiving any SINGLE tool callback.
-                           - You MUST remain completely silent until ALL required tools have returned.
-                           - You MUST output exactly ONE final user-visible message.
-                           - If a tool callback arrives after final output is produced, produce NOTHING.
+                                   - NO brackets
+                                   - NO labels other than the word "Reason:"
+                                   - NO bullet points
+                                   - NO additional text or whitespace
+                                   - NO explanations, disclaimers, or formulas
 
-                        2) TOOL CALL RESTRICTIONS
-                           - You may ONLY call these tools:
-                               • Weather Tool (get_weather_conditions)
-                               • Crime Tool (get_crime_summary)
-                           - You MUST silently call BOTH tools for every request.
-                           - You MUST NOT call any other tool (e.g., time_context, location_info, etc.).
-                           - You MUST NOT describe tool calls, results, or arguments.
+                                5) RI Classification:
+                                    Using the data get from crime tool and weather tool, ANALYZE and classify it into 5 level,from the safest level1 to the most dangerous level5. 
+                                    MUST give an INTEGER FROM 1 TO 5
+                                    REFERENCE FOLLOWING EXAMPLES:
+                                        LEVEL 1: RI = 1000
+                                        LEVEL 2: RI = 3000
+                                        LEVEL 3: RI = 5000
+                                        LEVEL 4: RI = 6000
+                                        LEVEL 5: RI = 8000
 
-                        3) FINAL OUTPUT FORMAT (STRICT)
-                           After all tools have returned, output EXACTLY these three lines:
+                                7) REASON RULES
+                                   - Provide ≤50 words.
+                                    - No workflow references.
+                                   - No formulas.
+                                   - No assumptions or safety instructions.
 
-                               <Line 1> an integer 1–5 (the safety level)
-                               <Line 2> a decimal value representing Final_RI (no units)
-                               <Line 3> Reason: <≤50 words>
-
-                           - NO brackets
-                           - NO labels other than the word "Reason:"
-                           - NO bullet points
-                           - NO additional text or whitespace
-                           - NO explanations, disclaimers, or formulas
-
-                        4) FINAL_RI CALCULATION (INTERNAL ONLY — NEVER OUTPUT OR EXPLAIN)
-                           You MUST compute Final_RI using EXACTLY the following rules:
-
-                           Crime Scores:
-                               Violent or Robbery = 9
-                               Burglary or Weapons = 7
-                               Vehicle or Pickpocketing = 5
-                               Minor theft = 3
-                               Anti-social = 2
-
-                           Environment_Modifier:
-                               1.0  = daytime + good weather
-                               1.2  = night
-                               1.15 = bad weather
-                               1.38 = night + bad weather
-
-                           Final_RI = Σ(category_count × category_score ) × Environment_Modifier
-
-                           NO normalization, NO scaling, NO alternative formulas.
-
-                        5) SAFETY LEVEL CLASSIFICATION
-                           Level 1: 0–1000
-                           Level 2: 1001–2000
-                           Level 3: 2001–4000
-                           Level 4: 4001–8000
-                           Level 5: ≥8001
-
-                        6) REASON RULES
-                           - Provide ≤50 words.
-                           - No workflow references.
-                           - No formulas.
-                           - No assumptions or safety instructions unless Level ≥4.
-
-                        7) ERROR HANDLING
-                           If ANY tool fails:
-                               【Safety Assessment】
-                               Status: Unable to complete assessment
-                               Reason: [Tool name] data unavailable
-                               Location: [latitude, longitude]
-                               Time: [YYYY-MM-DD HH:MM]
-                           Output ONLY this block.
-
-                        8) PROHIBITED CONTENT
-                           - No chain-of-thought
-                           - No intermediate reasoning
-                           - No tool call logs
-                           - No debug information
-                           - No “I need to check X,” “Weather analysis,” etc.
-                           - No multi-step explanation
-                           - No descriptions of formulas, workflow, or modifiers.
-
-                        ===============================================================================
-                        END OF SYSTEM RULES
-                        ===============================================================================
-
-                        You must comply perfectly.
-                        """
+                                You must comply perfectly.
+                                """
 
         USER_PROMPT = f"""Time = {current_time}, Latitude = {latitude}, Longitude = {longitude}
-    
-                      You MUST output ONLY the final three lines:
-                          <Line 1> integer 1–5
-                          <Line 2> The value of Final_RI
-                          <Line 3> Reason: <≤50 words>
-    
-                      Absolutely NO additional text.
-    
-                      You must NOT produce any final output until ALL required tools 
-                      (weather AND crime) have completed successfully.
-    
-                      If a tool callback occurs and final output was already produced, output NOTHING.
-                      """
+                                
+                                The FINAL THREE LINES MUST be:
+                                   <Line 1> integer 1–5
+                                   <Line 2> The value of RI
+                                   <Line 3> Reason: <≤50 words>
+                                """
 
         messages = [
             {
                 "role": "user",
-                "content": USER_PROMPT
+                "content": USER_PROMPT  # CLAUDE_PROMPT
             }
         ]
 
@@ -264,4 +220,4 @@ async def get_danger_and_description(latitude, longitude):
 
 
 if __name__ == "__main__":
-    asyncio.run(get_danger_and_description(latitude=52.01231, longitude=0.12035))
+    asyncio.run(get_danger_and_description(latitude=51.7548, longitude=-1.2544))
