@@ -15,7 +15,8 @@ def test_api():
     # sleep(3)  # Simulate processing delay
     return {
         "level": randint(1, 5),
-        "reason": "High threat detected due to multiple nearby incidents. Seek shelter immediately.",
+        "reason": "High threat detected due to multiple nearby incidents. Seek shelter immediately. High threat detected due to multiple nearby incidents. Seek shelter immediately. High threat detected due to multiple nearby incidents. Seek shelter immediately. High threat detected due to multiple nearby incidents. Seek shelter immediately.",
+        "short_reason": "Multiple nearby incidents. Seek shelter.",
     }
 
 @app.route("/api/mcp")
