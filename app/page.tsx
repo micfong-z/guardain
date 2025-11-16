@@ -22,6 +22,7 @@ export default function Home() {
     nearestPoliceStation?: {
       name: string,
       position: [number, number],
+      distance: number,
       contact?: { fax: string, telephone: string }
     };
   }
@@ -53,6 +54,7 @@ export default function Home() {
             result.nearestPoliceStation = {
               name: policeStation.name,
               position: [policeStation.coords.latitude, policeStation.coords.longitude],
+              distance: policeStation.distance,
             };
             console.log("Nearest Police Station Data:", policeStation);
             setData(result);
@@ -84,7 +86,7 @@ export default function Home() {
     <main className="min-h-screen">
       <ThreatLevel level={data?.level ?? 5} description={data?.reason ?? "Reason not available"} />
       <MapBlock userLat={userLat ?? 0} userLon={userLon ?? 0} nearestPoliceStation={data?.nearestPoliceStation} />
-      <NearestPolice userLat={userLat ?? 0} userLon={userLon ?? 0} />
+      <NearestPolice userLat={userLat ?? 0} userLon={userLon ?? 0} nearestPoliceStation={data?.nearestPoliceStation} />
       <HighlightsBlock />
       <Card title="Incidents" iconPath={mdiCarEmergency}>
         <p className="text-sm">

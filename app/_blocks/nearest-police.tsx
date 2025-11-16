@@ -10,14 +10,20 @@ import { bearing } from "../_lib/bearing";
 export default function NearestPolice({
   userLat,
   userLon,
+  nearestPoliceStation
 }: {
   userLat: number;
   userLon: number;
+  nearestPoliceStation?: {
+      name: string,
+      position: [number, number],
+      distance: number,
+    },
 }) {
   const [showCompass, setShowCompass] = useState(false);
 
-  const stationLat = 52.2041182;
-  const stationLon = 0.1271814;
+  const stationLat = nearestPoliceStation?.position[0] ?? 52.2041182;
+  const stationLon = nearestPoliceStation?.position[1] ?? 0.1271814;
   const stationBearing = bearing(userLat, userLon, stationLat, stationLon);
   console.log("User Location:", userLat, userLon);
   console.log("Station Location:", stationLat, stationLon);
@@ -29,10 +35,10 @@ export default function NearestPolice({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-base font-bold">
-              Cambridge Police Station
+              {nearestPoliceStation?.name ?? "Cambridge Police Station"}
             </p>
             <div className="text-sm opacity-30">
-              Currently Open · 0.5 mi
+              {nearestPoliceStation?.distance.toFixed(1) ?? 0.5} mi
             </div>
           </div>
           <IconButton
@@ -51,7 +57,7 @@ export default function NearestPolice({
         <CompassPopup
           onClose={() => setShowCompass(false)}
           stationBearing={stationBearing}
-          navigationHref={"https://www.google.com/maps/dir/?api=1&destination=Cambridge+Police+Station"}
+          navigationHref={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(nearestPoliceStation?.name ?? "Cambridge Police Station") + `&destination_place_id=&travelmode=walking`}
         />
       )}
     </>
