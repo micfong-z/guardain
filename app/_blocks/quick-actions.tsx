@@ -2,12 +2,12 @@
 
 import { EmergencyButton, ShareButton } from "../_components/buttons";
 
-export default function QuickActions() {
+export default function QuickActions({ level, description }: { level?: number; description?: string }) {
   return (
-    <nav className="sticky w-full z-20 bottom-0 start-0 border-t border-neutral-800 ">
+    <nav className="fixed w-full z-20 bottom-0 left-0 border-t border-neutral-800">
       <div className="w-full bg-neutral-800/75 backdrop-blur-sm p-2 flex justify-center">
         <EmergencyButton />
-        <ShareButton />
+        <ShareButton level={level} description={description} />
       </div>
     </nav>
   );

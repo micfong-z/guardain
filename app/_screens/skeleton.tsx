@@ -18,14 +18,6 @@ export default function Skeleton() {
           </p>
         </div>
       </div>
-      {/* <MapBlock />
-      <NearestPolice />
-      <HighlightsBlock />
-      <Card title="Incidents" iconPath={mdiCarEmergency}>
-        <p className="text-sm">
-          No incidents reported.
-        </p>
-      </Card> */}
     </main>
   )
 }

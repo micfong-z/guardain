@@ -1,4 +1,3 @@
-import QuickActions from './_blocks/quick-actions'
 import './globals.css'
 import { Inter } from 'next/font/google'
 
@@ -22,7 +21,6 @@ export default function RootLayout({
           crossOrigin="" />
         <div className="grow bg-repeat bg-[url('/bg-grid.svg')] bg-opacity-50">
           {children}
-          <QuickActions />
         </div>
       </body>
     </html>
