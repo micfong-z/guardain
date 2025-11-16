@@ -103,19 +103,28 @@ def decode_polyline(polyline_str: str) -> List[List[float]]:
 # ============================================================================
 
 @mcp.tool()
-def get_crime_summary(latitude: float, longitude: float) -> Dict: # Raidus is not currently working
+def get_crime_summary(latitude: float, longitude: float):
     """Get aggregated crime statistics for a location.
-    
+
     Returns total crimes and breakdown by category for the most recent month available
     from UK Police data.
-    
+
     Args:
         latitude: Latitude of the location (e.g., 51.5074 for London)
         longitude: Longitude of the location (e.g., -0.1278 for London)
-    
+
     Returns:
-        Dictionary with crime counts by category, total crimes, and month
+        A text message containing:
+        1. Top 3 types of crime
     """
+
+    CRIME_FACTOR = {"robbery": 9,
+                    "violent-crime": 9,
+                    "burglary": 5,
+                    "possession-of-weapons": 5,
+                    "vehicle-crime": 3,
+                    "theft-from-the-person": 3}
+
     try:
         with httpx.Client(timeout=10.0) as client:
             response = client.get(
@@ -124,28 +133,48 @@ def get_crime_summary(latitude: float, longitude: float) -> Dict: # Raidus is no
             )
             response.raise_for_status()
             crimes_data = response.json()
-        
+
         if not isinstance(crimes_data, list):
             return {"error": "Invalid response from UK Police API"}
-        
+
         # Aggregate crime counts
         crime_counts = {}
         for crime in crimes_data:
             category = crime.get("category", "unknown")
             crime_counts[category] = crime_counts.get(category, 0) + 1
-        
+
+        crime_score = {}
+        risk_index = 0
+        for key, val in  crime_counts.items():
+            if key in CRIME_FACTOR:
+                crime_score[key] = val * CRIME_FACTOR[key]
+                risk_index += val * CRIME_FACTOR[key]
+            else:
+                crime_score[key] = val * 2
+                risk_index += val * 2
+
         # Get month from first crime
         month = crimes_data[0].get("month", "unknown") if crimes_data else "unknown"
-        
-        # Get top 3 crime types
-        top_crimes = sorted(crime_counts.items(), key=lambda x: x[1], reverse=True)[:3]
-        
-        return {
-            "total_crimes": len(crimes_data),
-            "crime_counts": crime_counts,
-            "top_crime_types": [{"type": t[0], "count": t[1]} for t in top_crimes]
-        }
-    
+
+        # Get top 3 crime scores
+        top_crimes = sorted(crime_score.items(), key=lambda x: x[1], reverse=True)[:3]
+
+        match len(top_crimes):
+            case 0: top_info = "No crime in this region"
+            case 1: top_info = f"""{top_crimes[0][0]}: {crime_counts[top_crimes[0][0]]} times"""
+            case 2: top_info = f"""{top_crimes[0][0]}: {crime_counts[top_crimes[0][0]]} times
+{top_crimes[1][0]}: {crime_counts[top_crimes[1][0]]} times"""
+            case 3: top_info = f"""{top_crimes[0][0]}: {crime_counts[top_crimes[0][0]]} times
+{top_crimes[1][0]}: {crime_counts[top_crimes[1][0]]} times
+{top_crimes[2][0]}: {crime_counts[top_crimes[2][0]]} times"""
+
+        combined_info = f"""**Calculated risk_index is {risk_index}**
+There are **{len(crimes_data)}** criminals in total.
+A few types (max 3) of criminals with top criminal scores and corresponding number of occurrence this month:
+{top_info}"""
+
+        return combined_info
+
     except Exception as e:
         return {"error": f"Failed to fetch crime data: {str(e)}"}
 
