@@ -103,7 +103,7 @@ export default function CompassPopup({
           </button>
         </div>
 
-        {!isSupported ? (
+        {!isSupported || deviceHeading === null ? (
           <div className="text-center py-8">
             <p className="text-neutral-400 mb-2">Compass unavailable</p>
             <p className="text-sm text-neutral-500">

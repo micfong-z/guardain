@@ -3,6 +3,7 @@
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import { mdiFullscreen } from "@mdi/js";
 import { Icon } from "@mdi/react";
+import { icon } from "leaflet";
 
 export default function MapBlock({
   userLat,
@@ -18,21 +19,34 @@ export default function MapBlock({
     },
 }) {
 
+  const stationIcon = icon({
+    iconUrl: '/station.svg',
+    iconSize: [32, 32],
+  })
+
+  const myLocationIcon = icon({
+    iconUrl: '/my-location.svg',
+    iconSize: [32, 32],
+  })
+
   return (
     <div className="bg-neutral-900 backdrop-blur-sm text-center border-b border-neutral-800 text-white h-40 relative">
-      <MapContainer center={[userLat, userLon]} zoom={13} zoomControl={false} scrollWheelZoom={false} className="h-40 shadow-inner shadow-black/25 invert hue-rotate-180 grayscale-[80%]">
+      <MapContainer center={[userLat, userLon]} zoom={12} zoomControl={false} scrollWheelZoom={false} className="h-40 shadow-inner shadow-black/25">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <Marker position={[userLat, userLon]}>
+        <Marker position={[userLat, userLon]} icon={myLocationIcon}>
           <Popup>
             Your Location
           </Popup>
         </Marker>
         {nearestPoliceStation && (
-          <Marker position={nearestPoliceStation.position}>
+          <Marker position={nearestPoliceStation.position} icon={stationIcon}>
             <Popup>
+              <div className="font-bold mb-1">
+                Nearest Station
+              </div>
               {nearestPoliceStation.name}
               {nearestPoliceStation.contact && (
                 <div className="text-xs mt-1">
