@@ -103,7 +103,7 @@ def decode_polyline(polyline_str: str) -> List[List[float]]:
 # ============================================================================
 
 @mcp.tool()
-def get_crime_summary(latitude: float, longitude: float, radius_miles: float = 1.0) -> Dict: # Raidus is not currently working
+def get_crime_summary(latitude: float, longitude: float) -> Dict: # Raidus is not currently working
     """Get aggregated crime statistics for a location.
     
     Returns total crimes and breakdown by category for the most recent month available
@@ -112,7 +112,6 @@ def get_crime_summary(latitude: float, longitude: float, radius_miles: float = 1
     Args:
         latitude: Latitude of the location (e.g., 51.5074 for London)
         longitude: Longitude of the location (e.g., -0.1278 for London)
-        radius_miles: Search radius in miles (default: 1.0)
     
     Returns:
         Dictionary with crime counts by category, total crimes, and month
@@ -142,11 +141,8 @@ def get_crime_summary(latitude: float, longitude: float, radius_miles: float = 1
         top_crimes = sorted(crime_counts.items(), key=lambda x: x[1], reverse=True)[:3]
         
         return {
-            "location": {"latitude": latitude, "longitude": longitude},
             "total_crimes": len(crimes_data),
             "crime_counts": crime_counts,
-            "month": month,
-            "area_description": f"{radius_miles} mile radius",
             "top_crime_types": [{"type": t[0], "count": t[1]} for t in top_crimes]
         }
     

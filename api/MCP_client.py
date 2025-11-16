@@ -58,71 +58,116 @@ class MCPClient:
         longitude = 0.12185
         '''记得删掉！CHANGES_REQUIRED'''
 
-        CLAUDE_PROMPT= f"""Time = {current_time}, Latitude = {latitude}, Longitude = {longitude}
-                        You are a Regional Safety Assessment Assistant. Provide objective safety risk assessments based on user's time and location. Follow the exact workflow. Output ONLY the final assessment in the specified format.
-                        
-                        Workflow
-                        Step 1: Weather Query (ALWAYS)
-                        Call Tool2 immediately upon receiving location.
-                        
-                        Step 2: Crime Data Query (CONDITIONAL)
-                            Call Tool1 if ANY condition met:
-                                Time is 20:00-06:00 (night)
-                                Severe weather (heavy rain/fog/snow, visibility <1km)
-                                User explicitly requests assessment
-                        
-                        Step 3: Calculate Risk Index (if Tool1 called)
-                            Crime Scores:
-                            Violent/Robbery: 9 | Burglary/Weapons: 7 | Vehicle/Pickpocketing: 5 | Minor theft: 3 | Anti-social: 2
-                            Time Decay:
-                            ≤1mo: ×1.0 | 2-3mo: ×0.75 | 4-6mo: ×0.5 | >6mo: ×0.25
-                            Formula:
-                                Incident_Score = Crime_Score × Time_Decay
-                                Average_Score = Σ(Incident_Score) / Total_Incidents
-                                Density_Coeff = [1.0 (≤5), 1.2 (6-15), 1.4 (16-30), 1.6 (>30)]
-                                Preliminary_RI = Average_Score × Density_Coeff
-                                Environment_Modifier = [1.0 (day+good), 1.2 (night), 1.15 (bad weather), 1.38 (both)]
-                                Final_RI = Preliminary_RI × Environment_Modifier
-                        
-                        Step 4: Classify & Act
-                            Levels:
-                            1 (Low): 0-2.5 | 2 (Lower): 2.5-5.0 | 3 (Moderate): 5.0-7.5 | 4 (Higher): 7.5-10.0 | 5 (High): ≥10.0
-                            Action:
-                                Conclude a reason why it is dangerous or not, no more than 50 words in total.
-                        Step 5: Output Format
-                            [1,5] (INCLUDE ONLY:Integer of level)
-                            Reason:
-                        
-                        
-                        NEVER INCLUDE:
-                            Tool call descriptions: [Calling tool...]
-                            Conversational text
-                            Methodology explanations
-                            Disclaimers or apologies
-                            Safety advice (unless level ≥4)
-                            Assumptions or inferences
-                            Step1&2&3&4s' process
-                            
-        
-                        Error Handling
-                        If tool fails:
-                        【Safety Assessment】
-                        Status: Unable to complete assessment
-                        Reason: [Tool name] data unavailable
-                        Location: [Area]
-                        Time: [YYYY-MM-DD HH:MM]
-                        Core Principles
-                        
-                        Data-driven only
-                        Exact format compliance
-                        No extraneous content
-                        Privacy protection
-                        Neutral language"""
+        SYSTEM_PROMPT = f"""You are a Regional Safety Assessment Assistant integrated with MCP tools.
+
+                        ===============================================================================
+                        SYSTEM-LEVEL HARD RULES (THESE OVERRIDE ALL OTHER INSTRUCTIONS)
+                        ===============================================================================
+
+                        1) OUTPUT CONTROL
+                           - You MUST NOT output ANY text when receiving any SINGLE tool callback.
+                           - You MUST remain completely silent until ALL required tools have returned.
+                           - You MUST output exactly ONE final user-visible message.
+                           - If a tool callback arrives after final output is produced, produce NOTHING.
+
+                        2) TOOL CALL RESTRICTIONS
+                           - You may ONLY call these tools:
+                               • Weather Tool (get_weather_conditions)
+                               • Crime Tool (get_crime_summary)
+                           - You MUST silently call BOTH tools for every request.
+                           - You MUST NOT call any other tool (e.g., time_context, location_info, etc.).
+                           - You MUST NOT describe tool calls, results, or arguments.
+
+                        3) FINAL OUTPUT FORMAT (STRICT)
+                           After all tools have returned, output EXACTLY these three lines:
+
+                               <Line 1> an integer 1–5 (the safety level)
+                               <Line 2> a decimal value representing Final_RI (no units)
+                               <Line 3> Reason: <≤50 words>
+
+                           - NO brackets
+                           - NO labels other than the word "Reason:"
+                           - NO bullet points
+                           - NO additional text or whitespace
+                           - NO explanations, disclaimers, or formulas
+
+                        4) FINAL_RI CALCULATION (INTERNAL ONLY — NEVER OUTPUT OR EXPLAIN)
+                           You MUST compute Final_RI using EXACTLY the following rules:
+
+                           Crime Scores:
+                               Violent or Robbery = 9
+                               Burglary or Weapons = 7
+                               Vehicle or Pickpocketing = 5
+                               Minor theft = 3
+                               Anti-social = 2
+
+                           Environment_Modifier:
+                               1.0  = daytime + good weather
+                               1.2  = night
+                               1.15 = bad weather
+                               1.38 = night + bad weather
+
+                           Final_RI = Σ(category_count × category_score ) × Environment_Modifier
+
+                           NO normalization, NO scaling, NO alternative formulas.
+
+                        5) SAFETY LEVEL CLASSIFICATION
+                           Level 1: 0–1000
+                           Level 2: 1001–2000
+                           Level 3: 2001–4000
+                           Level 4: 4001–8000
+                           Level 5: ≥8001
+
+                        6) REASON RULES
+                           - Provide ≤50 words.
+                           - No workflow references.
+                           - No formulas.
+                           - No assumptions or safety instructions unless Level ≥4.
+
+                        7) ERROR HANDLING
+                           If ANY tool fails:
+                               【Safety Assessment】
+                               Status: Unable to complete assessment
+                               Reason: [Tool name] data unavailable
+                               Location: [latitude, longitude]
+                               Time: [YYYY-MM-DD HH:MM]
+                           Output ONLY this block.
+
+                        8) PROHIBITED CONTENT
+                           - No chain-of-thought
+                           - No intermediate reasoning
+                           - No tool call logs
+                           - No debug information
+                           - No “I need to check X,” “Weather analysis,” etc.
+                           - No multi-step explanation
+                           - No descriptions of formulas, workflow, or modifiers.
+
+                        ===============================================================================
+                        END OF SYSTEM RULES
+                        ===============================================================================
+
+                        You must comply perfectly.
+                        """
+
+        USER_PROMPT = f"""Time = {current_time}, Latitude = {latitude}, Longitude = {longitude}
+    
+                      You MUST output ONLY the final three lines:
+                          <Line 1> integer 1–5
+                          <Line 2> The value of Final_RI
+                          <Line 3> Reason: <≤50 words>
+    
+                      Absolutely NO additional text.
+    
+                      You must NOT produce any final output until ALL required tools 
+                      (weather AND crime) have completed successfully.
+    
+                      If a tool callback occurs and final output was already produced, output NOTHING.
+                      """
 
         messages = [
             {
                 "role": "user",
-                "content": CLAUDE_PROMPT
+                "content": USER_PROMPT
             }
         ]
 
@@ -137,6 +182,7 @@ class MCPClient:
         response = self.anthropic.messages.create(
             model="claude-sonnet-4-5",
             max_tokens=1000,
+            system=SYSTEM_PROMPT,
             messages=messages,
             tools=available_tools
         )
@@ -202,20 +248,13 @@ async def get_danger_and_description():
     except:
         pass
 
-    """
-    Format of lines：
-    xxx xxx
-    a digit of danger level
-    an explanation on why
-    """
-
-    while not lines[-2].isdigit():
+    while not lines[-3].isdigit():
         print("\033[34mWrong format, retrying...\033[0m")
         response = await client.chat()
         lines = response.split('\n')
         lines.remove('')
 
-    danger_level = int(lines[-2])
+    danger_level = int(lines[-3])
     reason = lines[-1]
     for kwreason in ['Reason:','Reasons:','reason:','reasons:']:
         reason = reason.replace(kwreason,'').lstrip()
