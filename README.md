@@ -1,4 +1,6 @@
-# GuardAIn
+<img width="3241" height="369" alt="guardain" src="https://github.com/user-attachments/assets/a3c06d00-0b72-461b-aa78-5a1f0856a3ff" />
+
+---
 
 _This is a Hackathon project for [CUES x CUABC x CAISH x CUE Hackathon 2025](https://cues-hackathon-2025.devpost.com/). Not intended for production._
 
